@@ -1,0 +1,21 @@
+{
+  "name": "reelscore-go",
+  "version": "1.0.0",
+  "description": "A movie and TV series tracking application built with Go and HTMX.",
+  "main": "index.js",
+  "scripts": {
+    "build:css": "npx @tailwindcss/cli -i app.css -o internal/static/css/output.css",
+    "watch:css": "npx @tailwindcss/cli -i app.css -o internal/static/css/output.css --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.14",
+    "@tailwindcss/vite": "^4.0.0",
+    "daisyui": "^5.3.7",
+    "tailwindcss": "^4.1.14"
+  }
+}

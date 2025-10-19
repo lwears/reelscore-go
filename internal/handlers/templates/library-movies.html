@@ -1,0 +1,129 @@
+{{template "layout.html" .}}
+
+{{define "title"}}My Movies - ReelScore{{end}}
+
+{{define "content"}}
+<div class="card bg-base-100 shadow-xl mb-8">
+    <div class="card-body">
+        <h1 class="card-title text-3xl md:text-4xl">My Movies</h1>
+        <p class="text-base-content/70">Manage your movie library</p>
+
+        <div role="tablist" class="tabs tabs-boxed mt-6 bg-base-200">
+            <a href="/library/movies/watched" role="tab" class="tab {{if eq .Watched true}}tab-active{{end}}">
+                Watched
+            </a>
+            <a href="/library/movies/watchlist" role="tab" class="tab {{if eq .Watched false}}tab-active{{end}}">
+                Watchlist
+            </a>
+        </div>
+
+        <form action="/library/movies/{{if .Watched}}watched{{else}}watchlist{{end}}" method="get" class="form-control mt-6">
+            <div class="join w-full">
+                <input
+                    type="text"
+                    name="query"
+                    class="input input-bordered join-item flex-1"
+                    placeholder="Search your movies..."
+                    value="{{.Query}}"
+                />
+                <button type="submit" class="btn btn-primary join-item">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{if .Movies}}
+<div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
+    {{range .Movies}}
+    <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 flex flex-col h-full">
+        {{if .PosterPath}}
+        <figure class="aspect-[2/3]">
+            <img
+                src="https://image.tmdb.org/t/p/w500{{.PosterPath}}"
+                alt="{{.Title}}"
+                class="w-full h-full object-cover"
+            />
+        </figure>
+        {{else}}
+        <figure class="aspect-[2/3] bg-gradient-to-br from-primary to-secondary"></figure>
+        {{end}}
+
+        <div class="card-body p-3 md:p-4 flex flex-col flex-grow justify-between">
+            <h3 class="card-title text-sm md:text-base line-clamp-2">{{.Title}}</h3>
+
+            <div class="flex flex-col gap-2 text-xs md:text-sm mb-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-base-content/70">
+                        {{if .ReleaseDate}}{{.ReleaseDate.Format "2006"}}{{else}}N/A{{end}}
+                    </span>
+                    <div class="badge badge-warning gap-1">
+                        <span>⭐</span>
+                        <span>{{printf "%.1f" .TmdbScore}}</span>
+                    </div>
+                </div>
+                {{if gt .Score 0.0}}
+                <div class="badge badge-success gap-1">
+                    <span>You:</span>
+                    <span>{{printf "%.0f" .Score}}/10</span>
+                </div>
+                {{end}}
+            </div>
+
+            <div class="card-actions gap-2 mt-auto">
+                <form action="/api/movies/{{.ID}}" method="post" class="flex-1">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="btn btn-error btn-sm w-full">
+                        🗑 Delete
+                    </button>
+                </form>
+
+                {{if not .Watched}}
+                <form action="/api/movies/{{.ID}}" method="post" class="flex-1">
+                    <input type="hidden" name="_method" value="PATCH">
+                    <input type="hidden" name="watched" value="true">
+                    <button type="submit" class="btn btn-info btn-sm w-full">
+                        ✓ Watched
+                    </button>
+                </form>
+                {{end}}
+            </div>
+        </div>
+    </div>
+    {{end}}
+</div>
+
+<div class="join flex justify-center items-center mt-8">
+    {{if gt .Page 1}}
+    <a href="/library/movies/{{if .Watched}}watched{{else}}watchlist{{end}}?query={{.Query}}&page={{sub .Page 1}}" class="join-item btn btn-outline">
+        « Previous
+    </a>
+    {{else}}
+    <button class="join-item btn btn-outline btn-disabled">« Previous</button>
+    {{end}}
+
+    <button class="join-item btn btn-outline">
+        Page {{.Page}} of {{.TotalPages}}
+    </button>
+
+    {{if lt .Page .TotalPages}}
+    <a href="/library/movies/{{if .Watched}}watched{{else}}watchlist{{end}}?query={{.Query}}&page={{add .Page 1}}" class="join-item btn btn-outline">
+        Next »
+    </a>
+    {{else}}
+    <button class="join-item btn btn-outline btn-disabled">Next »</button>
+    {{end}}
+</div>
+{{else}}
+<div class="card bg-base-100 shadow-xl">
+    <div class="card-body items-center text-center py-12">
+        <h2 class="card-title text-2xl">No movies found</h2>
+        {{if .Watched}}
+        <p class="text-base-content/70">You haven't marked any movies as watched yet</p>
+        {{else}}
+        <p class="text-base-content/70">Your watchlist is empty</p>
+        {{end}}
+        <a href="/movies" class="btn btn-primary mt-4">Browse Movies</a>
+    </div>
+</div>
+{{end}}
+{{end}}

@@ -1,0 +1,361 @@
+{{template "layout.html" .}}
+
+{{define "title"}}Search - ReelScore{{end}}
+
+{{define "styles"}}
+.search-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.search-header {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.search-title {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.search-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+}
+
+.search-input {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    transition: border-color 0.3s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.btn-search {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem 3rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-search:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.results-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #667eea;
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 2rem;
+}
+
+.result-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+}
+
+.result-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+}
+
+.result-poster {
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.result-info {
+    padding: 1rem;
+}
+
+.result-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.result-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem;
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.result-year {
+    color: #888;
+}
+
+.result-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-weight: 600;
+    color: #f59e0b;
+}
+
+.result-type {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: #667eea;
+    color: white;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.result-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-action {
+    flex: 1;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-watched {
+    background: #10b981;
+    color: white;
+}
+
+.btn-watched:hover {
+    background: #059669;
+}
+
+.btn-watchlist {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-watchlist:hover {
+    background: #2563eb;
+}
+
+.no-results {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+}
+
+.no-results h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #666;
+}
+
+.empty-state svg {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+{{end}}
+
+{{define "content"}}
+<div class="search-container">
+    <div class="search-header">
+        <h1 class="search-title">Search Movies & TV Series</h1>
+        <form action="/search" method="get" class="search-form">
+            <input
+                type="text"
+                name="query"
+                class="search-input"
+                placeholder="Search for movies, TV shows..."
+                value="{{.Query}}"
+                autofocus
+            />
+            <button type="submit" class="btn-search">Search</button>
+        </form>
+    </div>
+
+    {{if .Query}}
+        {{if or .Movies .Series}}
+            {{if .Movies}}
+            <div class="results-section">
+                <h2 class="section-title">Movies ({{len .Movies}} results)</h2>
+                <div class="results-grid">
+                    {{range .Movies}}
+                    <div class="result-card">
+                        {{if .PosterPath}}
+                        <img
+                            src="https://image.tmdb.org/t/p/w500{{.PosterPath}}"
+                            alt="{{.Title}}"
+                            class="result-poster"
+                        />
+                        {{else}}
+                        <div class="result-poster"></div>
+                        {{end}}
+
+                        <div class="result-info">
+                            <span class="result-type">Movie</span>
+                            <h3 class="result-title">{{.Title}}</h3>
+
+                            <div class="result-meta">
+                                <span class="result-year">
+                                    {{if .ReleaseDate}}{{slice .ReleaseDate 0 4}}{{else}}N/A{{end}}
+                                </span>
+                                <span class="result-rating">
+                                    ⭐ {{printf "%.1f" .VoteAverage}}
+                                </span>
+                            </div>
+
+                            <div class="result-actions">
+                                <button
+                                    class="btn-action btn-watched"
+                                    hx-post="/api/movies"
+                                    hx-vals='{"tmdbId":{{.ID}},"title":{{.Title|toJSON}},"posterPath":{{.PosterPath|toJSON}},"releaseDate":{{.ReleaseDate|toJSON}},"tmdbScore":{{.VoteAverage}},"watched":true}'
+                                    hx-swap="none">
+                                    ✓ Seen
+                                </button>
+
+                                <button
+                                    class="btn-action btn-watchlist"
+                                    hx-post="/api/movies"
+                                    hx-vals='{"tmdbId":{{.ID}},"title":{{.Title|toJSON}},"posterPath":{{.PosterPath|toJSON}},"releaseDate":{{.ReleaseDate|toJSON}},"tmdbScore":{{.VoteAverage}},"watched":false}'
+                                    hx-swap="none">
+                                    + List
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+
+            {{if .Series}}
+            <div class="results-section">
+                <h2 class="section-title">TV Series ({{len .Series}} results)</h2>
+                <div class="results-grid">
+                    {{range .Series}}
+                    <div class="result-card">
+                        {{if .PosterPath}}
+                        <img
+                            src="https://image.tmdb.org/t/p/w500{{.PosterPath}}"
+                            alt="{{.Name}}"
+                            class="result-poster"
+                        />
+                        {{else}}
+                        <div class="result-poster"></div>
+                        {{end}}
+
+                        <div class="result-info">
+                            <span class="result-type">TV Series</span>
+                            <h3 class="result-title">{{.Name}}</h3>
+
+                            <div class="result-meta">
+                                <span class="result-year">
+                                    {{if .FirstAirDate}}{{slice .FirstAirDate 0 4}}{{else}}N/A{{end}}
+                                </span>
+                                <span class="result-rating">
+                                    ⭐ {{printf "%.1f" .VoteAverage}}
+                                </span>
+                            </div>
+
+                            <div class="result-actions">
+                                <button
+                                    class="btn-action btn-watched"
+                                    hx-post="/api/series"
+                                    hx-vals='{"tmdbId":{{.ID}},"title":{{.Name|toJSON}},"posterPath":{{.PosterPath|toJSON}},"firstAired":{{.FirstAirDate|toJSON}},"tmdbScore":{{.VoteAverage}},"watched":true}'
+                                    hx-swap="none">
+                                    ✓ Seen
+                                </button>
+
+                                <button
+                                    class="btn-action btn-watchlist"
+                                    hx-post="/api/series"
+                                    hx-vals='{"tmdbId":{{.ID}},"title":{{.Name|toJSON}},"posterPath":{{.PosterPath|toJSON}},"firstAired":{{.FirstAirDate|toJSON}},"tmdbScore":{{.VoteAverage}},"watched":false}'
+                                    hx-swap="none">
+                                    + List
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+        {{else}}
+            <div class="results-section">
+                <div class="no-results">
+                    <h3>No results found for "{{.Query}}"</h3>
+                    <p>Try searching with different keywords</p>
+                </div>
+            </div>
+        {{end}}
+    {{else}}
+        <div class="results-section">
+            <div class="empty-state">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <h2>Start Searching</h2>
+                <p>Enter a movie or TV show title to get started</p>
+            </div>
+        </div>
+    {{end}}
+</div>
+{{end}}
