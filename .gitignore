@@ -34,6 +34,10 @@ Thumbs.db
 
 # Dependencies
 vendor/
+node_modules/
+
+# Generated CSS
+internal/static/css/output.css
 
 # Logs
 *.log
