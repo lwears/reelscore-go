@@ -1,0 +1,8 @@
+# Exclude node_modules and generated files from language statistics
+node_modules/** linguist-vendored
+internal/static/css/output.css linguist-generated
+*.css linguist-detectable=false
+
+# Mark main languages
+*.go linguist-detectable=true
+*.html linguist-detectable=true
