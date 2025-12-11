@@ -59,7 +59,7 @@ go mod download
 ### 5. Run database migrations
 
 ```bash
-# Coming soon
+make migrate
 ```
 
 ### 6. Start the server

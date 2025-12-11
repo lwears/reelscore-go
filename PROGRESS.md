@@ -9,7 +9,9 @@
 ## ✅ Completed Tasks
 
 ### 1. Project Structure & Configuration
+
 **Files Created:**
+
 - `go.mod` - Go 1.23 module with dependencies
 - `.env` & `.env.example` - Environment configuration
 - `.gitignore` - Git ignore rules
@@ -19,12 +21,14 @@
 - Directory structure for `cmd/`, `internal/`, `templates/`, `static/`
 
 **Key Features:**
+
 - Go standard library for HTTP (no framework dependency)
 - Configuration validation on startup
 - Graceful shutdown handling
 - Health check endpoint at `/health`
 
 **Commands Available:**
+
 ```bash
 make migrate     # Run database migrations
 make docker-up   # Start PostgreSQL & Redis
@@ -36,16 +40,20 @@ make build       # Build binary
 ---
 
 ### 2. Database Schema & Migrations
+
 **Location:** `internal/database/migrations/`
 
 **Tables Created:**
+
 1. **User** - OAuth user accounts
+
    - ID (UUID), ProviderID, Provider (enum: GITHUB/GOOGLE)
    - Email, Name, CreatedAt, UpdatedAt
    - Indexes on providerId and email
    - Unique constraint on providerId
 
 2. **Movie** - User's movie library
+
    - ID (UUID), TmdbID, Title, PosterPath, ReleaseDate
    - TmdbScore (TMDB rating), Score (user rating 0-10)
    - Watched (boolean), UserID (foreign key)
@@ -58,6 +66,7 @@ make build       # Build binary
    - Same constraints and relationships
 
 **Migration System:**
+
 - Embedded SQL files using Go 1.23 `embed`
 - Automatic version tracking via `schema_migrations` table
 - Idempotent migrations (skip if already applied)
@@ -65,6 +74,7 @@ make build       # Build binary
 - Command: `go run cmd/server/main.go migrate`
 
 **Database Connection:**
+
 - Connection pooling with pgx/v5
 - Configurable pool settings (max 20, min 2 connections)
 - Health checks with 2-second timeout
@@ -73,9 +83,11 @@ make build       # Build binary
 ---
 
 ### 3. Data Models
+
 **Location:** `internal/models/`
 
 **User Model** (`user.go`):
+
 ```go
 type User struct {
     ID         uuid.UUID
@@ -89,6 +101,7 @@ type User struct {
 ```
 
 **Movie Model** (`movie.go`):
+
 ```go
 type Movie struct {
     ID          uuid.UUID
@@ -106,6 +119,7 @@ type Movie struct {
 ```
 
 **DTOs Included:**
+
 - `CreateMovieInput`, `UpdateMovieInput`, `ListMoviesInput`
 - `PaginatedMovies` - with page, count, totalPages
 - Similar DTOs for Series
@@ -113,10 +127,13 @@ type Movie struct {
 ---
 
 ### 4. Business Logic Services
+
 **Location:** `internal/services/`
 
 #### **UserService** (`user_service.go`)
+
 Methods:
+
 - `FindOrCreate()` - OAuth helper (find by provider ID or create)
 - `FindByProviderID()` - Lookup by OAuth provider
 - `Create()` - Create new user with validation
@@ -126,7 +143,9 @@ Methods:
 - `Delete()` - Delete user (cascades to content)
 
 #### **MovieService** (`movie_service.go`)
+
 Methods:
+
 - `List()` - Paginated list with filters:
   - Filter by watched/watchlist status
   - Search by title (case-insensitive)
@@ -138,15 +157,19 @@ Methods:
 - `Delete()` - Remove from library
 
 #### **SerieService** (`serie_service.go`)
+
 Identical to MovieService but for TV series.
 
 #### **TMDBService** (`tmdb_service.go`)
+
 **TMDB API Integration:**
+
 - HTTP client with 10-second timeout
 - Bearer token authentication
 - Automatic language (`en-US`) and adult filtering
 
 **Methods:**
+
 - `GetMovie(movieID)` - Fetch movie details
 - `GetTV(tvID)` - Fetch TV series details
 - `SearchMulti(query, page)` - Search movies & TV
@@ -157,12 +180,14 @@ Identical to MovieService but for TV series.
 - `GetImageURL(path)` - Build full image URLs
 
 **Response Types:**
+
 - `TMDBMovie` - Movie data structure
 - `TMDBTV` - TV series data structure
 - `TMDBMovieResponse` - Paginated results
 - `TMDBTVResponse` - Paginated results
 
 **Security:**
+
 - ✅ All queries use parameterized statements
 - ✅ Zero SQL injection risk
 - ✅ User ownership verified on all operations
@@ -171,15 +196,18 @@ Identical to MovieService but for TV series.
 ---
 
 ### 5. Redis Session Management
+
 **Location:** `internal/database/redis.go`
 
 **RedisClient Features:**
+
 - Connection pooling
 - Health checks with timeout
 - Graceful shutdown
 - Auto-reconnect on failure
 
 **SessionStore:**
+
 - `GenerateSessionID()` - Cryptographically secure (32 bytes, base64)
 - `Set()` - Store user ID with 7-day TTL
 - `Get()` - Retrieve user ID & auto-refresh TTL
@@ -187,6 +215,7 @@ Identical to MovieService but for TV series.
 - `Exists()` - Check session validity
 
 **Session Format:**
+
 - Key: `session:{sessionID}`
 - Value: User UUID as string
 - TTL: 7 days (configurable)
@@ -194,9 +223,11 @@ Identical to MovieService but for TV series.
 ---
 
 ### 6. Authentication Middleware
+
 **Location:** `internal/middleware/auth.go`
 
 **AuthMiddleware Methods:**
+
 - `RequireAuth()` - Protects HTML pages (redirects to /login)
 - `RequireAuthAPI()` - Protects API endpoints (returns 401 JSON)
 - `OptionalAuth()` - Adds user to context if logged in
@@ -204,10 +235,12 @@ Identical to MovieService but for TV series.
 - `ClearSessionCookie()` - Logout cookie clearing
 
 **Context Helpers:**
+
 - `GetUserFromContext()` - Retrieve full user object
 - `GetUserIDFromContext()` - Retrieve user UUID
 
 **Cookie Configuration:**
+
 - Name: `session`
 - Expiry: 7 days
 - HttpOnly: true (XSS protection)
@@ -218,14 +251,17 @@ Identical to MovieService but for TV series.
 ---
 
 ### 7. Logging Middleware
+
 **Location:** `internal/middleware/logging.go`
 
 **Features:**
+
 - Request logging: method, path, status, duration, IP
 - Wraps response writer to capture status codes
 - Production-ready structured logging
 
 **Example Output:**
+
 ```
 [reelscore] GET /movies 200 45ms 127.0.0.1
 ```
@@ -233,6 +269,7 @@ Identical to MovieService but for TV series.
 ---
 
 ### 8. OAuth2 Authentication
+
 **Location:** `internal/handlers/auth.go`
 
 **Providers:** GitHub & Google
@@ -240,11 +277,13 @@ Identical to MovieService but for TV series.
 **AuthHandler Endpoints:**
 
 1. **Google OAuth:**
+
    - `GoogleLogin` - `GET /auth/google/login`
    - `GoogleCallback` - `GET /auth/google/callback`
    - Scopes: `profile`, `email`
 
 2. **GitHub OAuth:**
+
    - `GitHubLogin` - `GET /auth/github/login`
    - `GitHubCallback` - `GET /auth/github/callback`
    - Scopes: `user:email`
@@ -258,6 +297,7 @@ Identical to MovieService but for TV series.
    - Redirects to `/login`
 
 **OAuth Flow:**
+
 1. User clicks "Sign in with Google/GitHub"
 2. Redirect to OAuth provider with state token
 3. Provider redirects to callback with code
@@ -269,6 +309,7 @@ Identical to MovieService but for TV series.
 9. Redirect to `/movies`
 
 **Security:**
+
 - ✅ CSRF protection with state tokens
 - ✅ Secure, httpOnly cookies
 - ✅ Session stored in Redis with TTL
@@ -276,6 +317,7 @@ Identical to MovieService but for TV series.
 - ✅ Uses `golang.org/x/oauth2` official library
 
 **Configuration Required:**
+
 ```env
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
@@ -285,15 +327,18 @@ HOST=http://localhost:8080
 ```
 
 **Callback URLs:**
+
 - Google: `http://localhost:8080/auth/google/callback`
 - GitHub: `http://localhost:8080/auth/github/callback`
 
 ---
 
 ### 9. Health Checks
+
 **Endpoint:** `GET /health`
 
 **Response:**
+
 ```json
 {
   "status": "ok",
@@ -303,6 +348,7 @@ HOST=http://localhost:8080
 ```
 
 **Checks:**
+
 - PostgreSQL connectivity (2-second timeout)
 - Redis connectivity (2-second timeout)
 - Returns 503 if either is down
@@ -310,10 +356,13 @@ HOST=http://localhost:8080
 ---
 
 ### 10. Docker Configuration
+
 **File:** `docker-compose.yml`
 
 **Services:**
+
 - **PostgreSQL 15.5** on port 5432
+
   - Database: `moviedb`
   - User/Password: `psql/psql`
   - Health checks enabled
@@ -323,6 +372,7 @@ HOST=http://localhost:8080
   - Health checks enabled
 
 **Volumes:**
+
 - `postgres_data` - Persistent database storage
 - `redis_data` - Persistent cache storage
 
@@ -343,6 +393,7 @@ HOST=http://localhost:8080
 ✅ Graceful shutdown
 
 **What's Next:**
+
 - Wire auth handlers into main.go
 - Create login page template
 - Create movie/series API handlers
@@ -356,6 +407,7 @@ HOST=http://localhost:8080
 ## 🔧 Development Workflow
 
 **Setup:**
+
 ```bash
 # 1. Copy environment file
 cp .env.example .env
@@ -433,6 +485,7 @@ reelscore-go/
 ## 🔐 Security Features
 
 **Authentication:**
+
 - ✅ OAuth2 with GitHub & Google
 - ✅ Secure session tokens (32-byte random)
 - ✅ HttpOnly cookies (XSS protection)
@@ -441,6 +494,7 @@ reelscore-go/
 - ✅ 7-day session expiry with auto-refresh
 
 **Database:**
+
 - ✅ All queries use parameterized statements
 - ✅ Zero SQL injection vulnerabilities
 - ✅ User ownership verification on all operations
@@ -448,6 +502,7 @@ reelscore-go/
 - ✅ Cascade delete on user removal
 
 **Application:**
+
 - ✅ Graceful shutdown
 - ✅ Connection pooling limits
 - ✅ Request timeout handling
@@ -458,6 +513,7 @@ reelscore-go/
 ## 📝 TODO List
 
 **Remaining Tasks:**
+
 1. Wire auth handlers into main.go
 2. Create rate limiting middleware
 3. Set up template rendering engine
@@ -479,6 +535,7 @@ reelscore-go/
 ## 🎯 Next Steps
 
 **Immediate priorities:**
+
 1. Wire authentication routes into main.go
 2. Create login page HTML template
 3. Create movie/series CRUD API handlers
@@ -486,6 +543,7 @@ reelscore-go/
 5. Integrate HTMX for dynamic interactions
 
 **Testing priorities:**
+
 1. Test OAuth flow end-to-end
 2. Test session management
 3. Test movie/series CRUD operations
@@ -496,6 +554,7 @@ reelscore-go/
 ## 📚 Dependencies
 
 **Core:**
+
 - `github.com/google/uuid` - UUID generation
 - `github.com/jackc/pgx/v5` - PostgreSQL driver
 - `github.com/redis/go-redis/v9` - Redis client
@@ -503,6 +562,7 @@ reelscore-go/
 - `golang.org/x/oauth2` - OAuth2 client
 
 **Standard Library Usage:**
+
 - `net/http` - HTTP server (no framework!)
 - `html/template` - Template rendering
 - `encoding/json` - JSON handling
@@ -514,20 +574,24 @@ reelscore-go/
 **Last Updated:** October 18, 2025
 
 ### 11. Template Rendering Engine
+
 **Location:** `internal/handlers/renderer.go`
 
 **Renderer Features:**
+
 - Embedded templates using Go 1.23 `embed` package
 - Parses all `.html` files from `internal/handlers/templates/`
 - Error handling with proper HTTP status codes
 - Helper methods for rendering pages
 
 **Methods:**
+
 - `NewRenderer()` - Initialize renderer with template parsing
 - `Render()` - Render template to any io.Writer
 - `RenderPage()` - Render to HTTP response with error handling
 
 **Benefits:**
+
 - ✅ Templates bundled in binary (no external files needed)
 - ✅ Templates cached in memory for performance
 - ✅ Automatic template reloading in development (rebuild required)
@@ -535,11 +599,14 @@ reelscore-go/
 ---
 
 ### 12. Login Page & OAuth Integration
+
 **Files:**
+
 - `internal/handlers/templates/login.html` - Login page template
 - `cmd/server/main.go` - Wired auth routes
 
 **Login Page Features:**
+
 - Beautiful gradient background (purple to blue)
 - Centered card layout with logo
 - GitHub OAuth button (black theme)
@@ -548,6 +615,7 @@ reelscore-go/
 - Clean typography and spacing
 
 **Routes Wired:**
+
 ```
 GET  /login                      -> Login page
 GET  /auth/google/login          -> Google OAuth initiation
@@ -558,6 +626,7 @@ GET  /auth/logout                -> Logout & clear session
 ```
 
 **Integration:**
+
 - ✅ Services initialized (UserService)
 - ✅ Middleware initialized (AuthMiddleware)
 - ✅ Renderer initialized with templates
@@ -566,6 +635,7 @@ GET  /auth/logout                -> Logout & clear session
 - ✅ All routes registered in main.go
 
 **Server Logs:**
+
 ```
 [reelscore] Starting ReelScore server in local mode
 Successfully connected to database
@@ -601,6 +671,7 @@ Successfully connected to Redis
 ✅ **Login page with OAuth** ← NEW
 
 **What's Next:**
+
 - Create browse pages for movies/series
 - Create library management pages
 - Add movie/series API handlers
@@ -613,12 +684,15 @@ Successfully connected to Redis
 ---
 
 ### 13. RESTful API Handlers
+
 **Files Created:**
+
 - `internal/handlers/movies.go` - Movie CRUD API handlers
 - `internal/handlers/series.go` - Series CRUD API handlers
 - `internal/handlers/tmdb.go` - TMDB API proxy handlers
 
 **Movie API Endpoints:**
+
 ```
 GET    /api/movies           -> List movies with pagination & filters
 POST   /api/movies           -> Add movie to library
@@ -628,6 +702,7 @@ DELETE /api/movies/{id}      -> Remove from library
 ```
 
 **Series API Endpoints:**
+
 ```
 GET    /api/series           -> List series with pagination & filters
 POST   /api/series           -> Add series to library
@@ -637,6 +712,7 @@ DELETE /api/series/{id}      -> Remove from library
 ```
 
 **TMDB API Proxy Endpoints:**
+
 ```
 GET /api/tmdb/movie/{id}      -> Fetch movie from TMDB
 GET /api/tmdb/tv/{id}         -> Fetch TV series from TMDB
@@ -648,12 +724,14 @@ GET /api/tmdb/discover/tv     -> Discover popular TV series
 ```
 
 **Query Parameters:**
+
 - `watched=true/false` - Filter by watched status
 - `query=search+term` - Full-text search on title
 - `page=1` - Page number (default: 1)
 - `limit=27` - Items per page (default: 27, max: 100)
 
 **Handler Features:**
+
 - ✅ User authentication required (RequireAuthAPI middleware)
 - ✅ User ownership verification on all operations
 - ✅ Proper HTTP status codes (200, 201, 400, 401, 404, 409, 500)
@@ -664,6 +742,7 @@ GET /api/tmdb/discover/tv     -> Discover popular TV series
 - ✅ Error messages in JSON format
 
 **Integration in main.go:**
+
 ```go
 // Initialize services
 movieService := services.NewMovieService(db.Pool)
@@ -684,6 +763,7 @@ mux.Handle("GET /api/movies", authMiddleware.RequireAuthAPI(http.HandlerFunc(mov
 ```
 
 **Test Results:**
+
 ```bash
 $ curl http://localhost:8080/health
 {"status":"ok","database":"up","redis":"up"}
@@ -693,6 +773,7 @@ $ curl http://localhost:8080/api/movies
 ```
 
 **All Routes Now Available:**
+
 - 6 auth routes (login, callbacks, logout)
 - 5 movie API routes (CRUD)
 - 5 series API routes (CRUD)
@@ -720,6 +801,7 @@ $ curl http://localhost:8080/api/movies
 ✅ **RESTful API handlers (movies, series, TMDB)** ← NEW
 
 **What's Next:**
+
 - Create browse pages for movies/series (HTML templates)
 - Create library management pages
 - Add HTMX for dynamic interactions
@@ -731,15 +813,17 @@ $ curl http://localhost:8080/api/movies
 
 ---
 
-
 ### 14. Base Layout & Navbar Templates
+
 **Files Created:**
+
 - `internal/handlers/templates/layout.html` - Base layout template
 - `internal/handlers/templates/browse-movies.html` - Movies browse page
 - `internal/handlers/templates/browse-series.html` - Series browse page
 - `internal/handlers/pages.go` - Page handlers for browse functionality
 
 **Layout Features:**
+
 - Modern, responsive navbar with navigation
 - User menu showing logged-in user name
 - Active page highlighting
@@ -748,6 +832,7 @@ $ curl http://localhost:8080/api/movies
 - Mobile-friendly design
 
 **Navbar Links:**
+
 - Browse Movies (`/movies`)
 - Browse Series (`/series`)
 - My Movies (`/library/movies/watched`)
@@ -755,6 +840,7 @@ $ curl http://localhost:8080/api/movies
 - Search (`/search`)
 
 **Template Enhancements:**
+
 - Custom template functions (`add`, `sub`) for pagination
 - Reusable base layout with `{{block}}` sections
 - Shared styles and structure
@@ -762,11 +848,14 @@ $ curl http://localhost:8080/api/movies
 ---
 
 ### 15. Browse Pages Implementation
+
 **Routes Added:**
+
 - `GET /movies` - Browse/search popular movies (protected)
 - `GET /series` - Browse/search popular TV series (protected)
 
 **Browse Movies Page Features:**
+
 - Grid display of movie cards with posters
 - Search bar for filtering movies
 - Movie metadata: title, year, TMDB rating (⭐)
@@ -779,6 +868,7 @@ $ curl http://localhost:8080/api/movies
 - Image fallback for missing posters
 
 **Card Design:**
+
 - 2:3 aspect ratio posters
 - Hover effects (lift and shadow)
 - Gradient background for missing images
@@ -786,6 +876,7 @@ $ curl http://localhost:8080/api/movies
 - Color-coded action buttons (green for watched, blue for watchlist)
 
 **Page Handler (`pages.go`):**
+
 - `BrowseMovies(w, r)` - Handles movie browsing
   - Fetches from TMDB discover or search endpoints
   - Passes user context to templates
@@ -795,10 +886,12 @@ $ curl http://localhost:8080/api/movies
   - Error handling and logging
 
 **Query Parameters:**
+
 - `?query=search+term` - Search movies/series by title
 - `?page=1` - Pagination (default: 1)
 
 **Integration:**
+
 - Both routes protected with `RequireAuth` middleware
 - Redirects to `/login` if not authenticated
 - Fetches data from TMDB service
@@ -807,14 +900,17 @@ $ curl http://localhost:8080/api/movies
 ---
 
 ### Bug Fix: TMDB ImageBaseURL Configuration
+
 **Date:** October 18, 2025
 
 **Issue Fixed:**
+
 - Added missing `ImageBaseURL` configuration to TMDB service initialization
 - Previously only `APIKey` and `BaseURL` were configured
 - `ImageBaseURL` is required for the `GetImageURL()` method to work properly
 
 **Changes Made:**
+
 - Updated `cmd/server/main.go:65-69` to include:
   ```go
   tmdbService := services.NewTMDBService(services.TMDBConfig{
@@ -825,6 +921,7 @@ $ curl http://localhost:8080/api/movies
   ```
 
 **Result:**
+
 - ✅ API URLs correctly formed: `https://api.themoviedb.org/3/movie/123`
 - ✅ Image URLs correctly formed: `https://image.tmdb.org/t/p/w500/path/to/image.jpg`
 - ✅ Server builds and runs successfully
@@ -833,19 +930,23 @@ $ curl http://localhost:8080/api/movies
 ---
 
 ### Bug Fix: Template Namespace Collision
+
 **Date:** October 18, 2025
 
 **Issue Fixed:**
+
 - Template rendering was failing with error: `can't evaluate field Title in type services.TMDBTV`
 - The problem was that all templates were parsed together, causing conflicts when multiple templates defined blocks with the same names ("content", "title", "styles")
 - When rendering `browse-series.html`, it was accidentally executing the "content" block from `library-series.html` which expected Serie models (with `.Title`) instead of TMDBTV models (with `.Name`)
 
 **Root Cause:**
+
 - The `Renderer.NewRenderer()` was parsing all `*.html` files at once using `ParseFS(templatesFS, "templates/*.html")`
 - Go templates with duplicate `{{define}}` names conflict, and the last parsed template's block definition wins
 - This caused unpredictable behavior when rendering pages
 
 **Changes Made:**
+
 - Updated `internal/handlers/renderer.go` Render() method:
   - Changed from parsing all templates at initialization to parsing on-demand
   - Each page render now parses only the specific template file + layout.html
@@ -853,6 +954,7 @@ $ curl http://localhost:8080/api/movies
   - This ensures each template has its own isolated namespace
 
 **Code Changes:**
+
 ```go
 // Before: Parsed all templates together (caused conflicts)
 tmpl, err := template.New("").Funcs(funcMap).ParseFS(templatesFS, "templates/*.html")
@@ -866,6 +968,7 @@ if name == "login.html" {
 ```
 
 **Result:**
+
 - ✅ No more template namespace collisions
 - ✅ Browse series page renders correctly with TMDBTV data
 - ✅ Library series page renders correctly with Serie data
@@ -875,9 +978,11 @@ if name == "login.html" {
 ---
 
 ### Feature: HTMX Integration
+
 **Date:** October 18, 2025
 
 **Implementation:**
+
 - ✅ Added HTMX library (v1.9.10) to layout template
 - ✅ Created toast notification system with CSS animations
 - ✅ Converted browse page forms to HTMX-powered buttons
@@ -887,17 +992,20 @@ if name == "login.html" {
 **Changes Made:**
 
 1. **Layout Template** (`internal/handlers/templates/layout.html`):
+
    - Added HTMX CDN script
    - Added toast notification container and styles
    - Added JavaScript for toast notifications and HTMX event handling
 
 2. **Browse Movies** (`browse-movies.html`):
+
    - Replaced forms with HTMX-enabled buttons
    - Uses `hx-post` to POST JSON data
    - Uses `hx-vals` to send movie data
    - Uses `hx-swap="none"` since we show toasts instead
 
 3. **Browse Series** (`browse-series.html`):
+
    - Same HTMX implementation as movies
    - Adapted for series data structure
 
@@ -907,6 +1015,7 @@ if name == "login.html" {
    - Messages displayed via toast notifications
 
 **User Experience:**
+
 - Click "✓ Seen" or "+ List" on any movie/series card
 - HTMX sends JSON POST request to API
 - Toast notification appears in top-right corner
@@ -915,6 +1024,7 @@ if name == "login.html" {
 - Toasts auto-dismiss after 3 seconds with slide-out animation
 
 **Technical Details:**
+
 - No page reload required
 - JSON API communication
 - Event-driven toast notifications
@@ -924,9 +1034,11 @@ if name == "login.html" {
 ---
 
 ### Feature: Rate Limiting Middleware
+
 **Date:** October 18, 2025
 
 **Implementation:**
+
 - ✅ Redis-backed sliding window rate limiter
 - ✅ Per-user rate limiting (when authenticated)
 - ✅ Per-IP rate limiting (when not authenticated)
@@ -934,9 +1046,11 @@ if name == "login.html" {
 - ✅ Applied to all API endpoints
 
 **Files Created:**
+
 - `internal/middleware/ratelimit.go` - Rate limiting middleware
 
 **Rate Limiting Strategy:**
+
 - **Algorithm**: Sliding window using Redis sorted sets
 - **Production**: 100 requests per minute per user/IP
 - **Local/Dev**: 1000 requests per minute (essentially unlimited for testing)
@@ -944,6 +1058,7 @@ if name == "login.html" {
 - **Storage**: Redis (automatic cleanup of old entries)
 
 **How It Works:**
+
 1. Identifies requester (user ID if authenticated, IP address otherwise)
 2. Uses Redis sorted set to track request timestamps
 3. Removes timestamps outside the current window
@@ -952,11 +1067,13 @@ if name == "login.html" {
 6. Automatically expires keys after window duration
 
 **Middleware Stack:**
+
 ```
 Request → RateLimiter → AuthMiddleware → Handler
 ```
 
 **Error Response (429 Too Many Requests):**
+
 ```json
 {
   "error": "Too many requests. Please try again later."
@@ -964,11 +1081,13 @@ Request → RateLimiter → AuthMiddleware → Handler
 ```
 
 **Protected Routes:**
+
 - All `/api/movies/*` endpoints
 - All `/api/series/*` endpoints
 - All `/api/tmdb/*` endpoints
 
 **Benefits:**
+
 - Prevents API abuse
 - Protects against DoS attacks
 - Fair resource allocation per user
@@ -978,9 +1097,11 @@ Request → RateLimiter → AuthMiddleware → Handler
 ---
 
 ### Feature: Unified Search Page
+
 **Date:** October 18, 2025
 
 **Implementation:**
+
 - ✅ Created unified search page for movies and TV series
 - ✅ HTMX-enabled "Add to Library" buttons
 - ✅ Real-time search results from TMDB API
@@ -989,10 +1110,12 @@ Request → RateLimiter → AuthMiddleware → Handler
 - ✅ No results state for unsuccessful searches
 
 **Files Created:**
+
 - `internal/handlers/templates/search.html` - Search page template
 - Added `Search()` handler in `internal/handlers/pages.go`
 
 **Features:**
+
 - **Unified Search**: Search both movies and TV series simultaneously
 - **Top 10 Results**: Shows top 10 results for each category
 - **Visual Distinction**: Movie and TV badges on cards
@@ -1001,6 +1124,7 @@ Request → RateLimiter → AuthMiddleware → Handler
 - **Beautiful UI**: Gradient backgrounds, card hover effects, responsive grid
 
 **User Experience:**
+
 1. Enter search query in the search bar
 2. Submit search (or press Enter)
 3. View results split into Movies and TV Series sections
@@ -1009,6 +1133,7 @@ Request → RateLimiter → AuthMiddleware → Handler
 6. No page reload required
 
 **Search Flow:**
+
 ```
 /search → GET query param
   ↓
@@ -1020,12 +1145,14 @@ Render results in two sections
 ```
 
 **UI States:**
+
 - **Empty**: Shows search icon and prompt to start searching
 - **Results**: Displays movies and TV series in separate sections
 - **No Results**: Shows friendly message with suggestion
 - **Error**: Gracefully handles API errors (logs, continues)
 
 **Integration:**
+
 - Added to navbar as "Search" link
 - Protected with authentication middleware
 - Uses existing TMDB service
@@ -1035,9 +1162,11 @@ Render results in two sections
 ---
 
 ### Feature: Dark/Light Theme Toggle
+
 **Date:** October 18, 2025
 
 **Implementation:**
+
 - ✅ Dark theme with beautiful dark gradients
 - ✅ Theme toggle button in navbar (🌙/☀️)
 - ✅ LocalStorage persistence (remembers preference)
@@ -1045,18 +1174,21 @@ Render results in two sections
 - ✅ Comprehensive dark mode styling for all components
 
 **Features:**
+
 - **Toggle Button**: Moon icon (🌙) for light mode, sun icon (☀️) for dark mode
 - **Persistent**: Saves preference in browser localStorage
 - **Smooth**: CSS transitions for all theme changes
 - **Comprehensive**: Dark styles for all pages and components
 
 **Dark Theme Colors:**
+
 - Background: Dark gradient (#1a1a2e → #16213e)
 - Cards/Sections: Semi-transparent dark (#1a1a2e with 80% opacity)
 - Text: Light gray (#e0e0e0)
 - Accents: Purple gradient (maintained from light theme)
 
 **How It Works:**
+
 1. Click theme toggle button in navbar
 2. JavaScript toggles `dark-theme` class on body
 3. CSS applies dark theme styles
@@ -1064,6 +1196,7 @@ Render results in two sections
 5. Theme persists across page reloads
 
 **Technical Implementation:**
+
 - Client-side JavaScript (no server round-trip)
 - CSS class-based theming
 - LocalStorage for persistence
@@ -1076,6 +1209,7 @@ Render results in two sections
 **Updated Progress:** 22/22 tasks completed (100%) ✅
 
 ### Completed Tasks (22/22):
+
 ✅ 1. Database schema created (3 tables: User, Movie, Serie)
 ✅ 2. OAuth2 authentication (GitHub, Google)
 ✅ 3. Session management (Redis)
@@ -1114,6 +1248,7 @@ Render results in two sections
 **Services:** 4 (User, Movie, Serie, TMDB)
 
 **Tech Stack:**
+
 - **Backend:** Go 1.23 (standard library HTTP server)
 - **Frontend:** Go templates + HTMX 1.9.10
 - **Database:** PostgreSQL 15.5
@@ -1179,6 +1314,7 @@ reelscore-go/
 ```
 
 **Structure follows Go best practices:**
+
 - ✅ `cmd/` for application entry points
 - ✅ `internal/` for private application code
 - ✅ Package-based organization (handlers, services, models)
@@ -1191,6 +1327,7 @@ reelscore-go/
 ## 🎯 Key Achievements
 
 ### Security
+
 - ✅ OAuth2 authentication with state tokens
 - ✅ Secure session management (httpOnly cookies)
 - ✅ SQL injection prevention (parameterized queries)
@@ -1199,6 +1336,7 @@ reelscore-go/
 - ✅ User ownership verification on all operations
 
 ### Performance
+
 - ✅ Connection pooling (PostgreSQL, Redis)
 - ✅ Embedded templates (no file I/O)
 - ✅ Redis-backed sessions (fast lookups)
@@ -1206,6 +1344,7 @@ reelscore-go/
 - ✅ Graceful shutdown (30s timeout)
 
 ### User Experience
+
 - ✅ HTMX for dynamic interactions (no page reloads)
 - ✅ Toast notifications for instant feedback
 - ✅ Dark/light theme with persistence
@@ -1214,6 +1353,7 @@ reelscore-go/
 - ✅ Smooth animations and transitions
 
 ### Developer Experience
+
 - ✅ Hot reload in development (`make run`)
 - ✅ Database migrations (`make migrate`)
 - ✅ Docker Compose for services
@@ -1260,12 +1400,14 @@ make db-reset     # Reset database
 ## 🔗 Routes
 
 **Public:**
+
 - `GET /login` - Login page
 - `GET /auth/{provider}/login` - OAuth initiation
 - `GET /auth/{provider}/callback` - OAuth callback
 - `GET /auth/logout` - Logout
 
 **Protected Pages:**
+
 - `GET /movies` - Browse movies
 - `GET /series` - Browse TV series
 - `GET /search` - Search movies & series
@@ -1273,11 +1415,13 @@ make db-reset     # Reset database
 - `GET /library/series/{type}` - My series (watched/watchlist)
 
 **Protected API:**
+
 - Movie CRUD: `GET|POST|PATCH|DELETE /api/movies`
 - Series CRUD: `GET|POST|PATCH|DELETE /api/series`
 - TMDB Proxy: `GET /api/tmdb/*`
 
 **System:**
+
 - `GET /health` - Health check
 
 ---
@@ -1302,6 +1446,7 @@ make db-reset     # Reset database
 **All 22 tasks completed successfully!**
 
 This project demonstrates:
+
 - Modern Go web development
 - HTMX for dynamic UIs
 - OAuth2 authentication
@@ -1319,25 +1464,30 @@ This project demonstrates:
 ## 🐛 Bug Fixes - October 19, 2025
 
 ### Fix 1: Template Date Formatting Errors
+
 **Date:** October 19, 2025
 
 **Issues Fixed:**
+
 1. ❌ Only 1 card was displaying on browse/search pages
 2. ❌ Cards showed "internal server error" in description
 3. ❌ Template rendering failed with date formatting errors
 
 **Root Cause:**
+
 - Templates were calling `.Format()` method on `ReleaseDate` and `FirstAirDate` fields
 - These fields are strings from the TMDB API (e.g., "2024-01-15"), not `time.Time` objects
 - Error: `can't evaluate field Format in type string`
 - Template execution failed after first card with a date, showing only partial results
 
 **Files Fixed:**
+
 - `internal/handlers/templates/browse-movies.html:183,194,202`
 - `internal/handlers/templates/browse-series.html:184,195,203`
 - `internal/handlers/templates/search.html:258,269,277,311,322,330`
 
 **Changes Made:**
+
 ```go
 // Before (caused errors):
 {{.ReleaseDate.Format "2006"}}         // ❌ Format() doesn't exist on strings
@@ -1349,6 +1499,7 @@ This project demonstrates:
 ```
 
 **Result:**
+
 - ✅ All movie/series cards display correctly
 - ✅ Years extracted properly from date strings
 - ✅ No more template rendering errors
@@ -1357,50 +1508,59 @@ This project demonstrates:
 ---
 
 ### Fix 2: Dark Mode Toggle Not Working
+
 **Date:** October 19, 2025
 
 **Issue Fixed:**
+
 - ❌ Theme toggle button didn't respond to clicks
 - ❌ Dark mode wouldn't activate
 
 **Root Cause:**
+
 - JavaScript was accessing `themeIcon` element without null checks
 - If element wasn't available (e.g., user not logged in), JavaScript would fail silently
 - Missing null safety caused the event listener to not attach properly
 
 **File Fixed:**
+
 - `internal/handlers/templates/layout.html:322-324,328`
 
 **Changes Made:**
+
 ```javascript
 // Before (could fail):
-if (savedTheme === 'dark') {
-    body.classList.add('dark-theme');
-    themeIcon.textContent = '☀️';  // ❌ Might be null
+if (savedTheme === "dark") {
+  body.classList.add("dark-theme");
+  themeIcon.textContent = "☀️"; // ❌ Might be null
 }
 
-if (themeToggle) {  // ❌ Missing themeIcon check
-    themeToggle.addEventListener('click', () => {
-        // ...
-    });
+if (themeToggle) {
+  // ❌ Missing themeIcon check
+  themeToggle.addEventListener("click", () => {
+    // ...
+  });
 }
 
 // After (safe):
-if (savedTheme === 'dark') {
-    body.classList.add('dark-theme');
-    if (themeIcon) {  // ✅ Null check added
-        themeIcon.textContent = '☀️';
-    }
+if (savedTheme === "dark") {
+  body.classList.add("dark-theme");
+  if (themeIcon) {
+    // ✅ Null check added
+    themeIcon.textContent = "☀️";
+  }
 }
 
-if (themeToggle && themeIcon) {  // ✅ Both checks
-    themeToggle.addEventListener('click', () => {
-        // ...
-    });
+if (themeToggle && themeIcon) {
+  // ✅ Both checks
+  themeToggle.addEventListener("click", () => {
+    // ...
+  });
 }
 ```
 
 **Result:**
+
 - ✅ Theme toggle button works correctly
 - ✅ Dark mode activates/deactivates properly
 - ✅ Theme persists across page reloads
@@ -1409,40 +1569,49 @@ if (themeToggle && themeIcon) {  // ✅ Both checks
 ---
 
 ### Fix 3: HTMX Button Click Errors
+
 **Date:** October 19, 2025
 
 **Issue Fixed:**
+
 - ❌ Clicking "✓ Seen" or "+ List" buttons caused errors
 - ❌ Movie/series titles with special characters broke JSON
 - ❌ Improper JSON escaping in HTMX `hx-vals` attributes
 
 **Root Cause:**
+
 - Templates used inline JSON in `hx-vals` attributes: `hx-vals='{"title": "{{.Title}}"}'`
 - Titles with quotes, apostrophes, or special characters broke JSON parsing
 - Example: Title "Don't Look Up" became `{"title": "Don't Look Up"}` (invalid JSON)
 - HTMX couldn't parse the malformed JSON, causing request failures
 
 **Files Fixed:**
+
 - `internal/handlers/templates/browse-movies.html:194,202`
 - `internal/handlers/templates/browse-series.html:195,203`
 - `internal/handlers/templates/search.html:269,277,322,330`
 
 **Changes Made:**
+
 ```html
 <!-- Before (broken with special characters): -->
 <button hx-vals='{"title": "{{.Title}}", "releaseDate": "{{.ReleaseDate}}"}'>
-
-<!-- After (properly escaped): -->
-<button hx-vals='js:{tmdbId:{{.ID}},title:{{printf "%q" .Title}},posterPath:{{if .PosterPath}}{{printf "%q" .PosterPath}}{{else}}null{{end}},releaseDate:{{if .ReleaseDate}}{{printf "%q" .ReleaseDate}}{{else}}null{{end}},tmdbScore:{{.VoteAverage}},watched:true}'>
+  <!-- After (properly escaped): -->
+  <button
+    hx-vals='js:{tmdbId:{{.ID}},title:{{printf "%q" .Title}},posterPath:{{if .PosterPath}}{{printf "%q" .PosterPath}}{{else}}null{{end}},releaseDate:{{if .ReleaseDate}}{{printf "%q" .ReleaseDate}}{{else}}null{{end}},tmdbScore:{{.VoteAverage}},watched:true}'
+  ></button>
+</button>
 ```
 
 **Key Improvements:**
+
 1. **`js:` prefix**: Tells HTMX to evaluate as JavaScript object literal
 2. **`printf "%q"`**: Go template function that properly escapes strings for JSON
 3. **Null handling**: Empty values become `null` instead of empty strings
 4. **Single-line format**: Avoids whitespace issues in HTML attributes
 
 **Example Transformations:**
+
 ```javascript
 // Title: "Don't Look Up"
 Before: {"title": "Don't Look Up"}         // ❌ Invalid JSON
@@ -1458,6 +1627,7 @@ After:  {posterPath:null}                  // ✅ Proper null
 ```
 
 **Result:**
+
 - ✅ All HTMX buttons work correctly
 - ✅ Special characters properly escaped
 - ✅ Movies/series added to library successfully
@@ -1475,6 +1645,7 @@ After:  {posterPath:null}                  // ✅ Proper null
 **Status:** ✅ ALL BUGS FIXED
 
 **Verified Functionality:**
+
 - ✅ All movie/series cards display correctly
 - ✅ Year extraction from date strings works
 - ✅ Dark mode toggle fully functional
@@ -1488,3 +1659,34 @@ After:  {posterPath:null}                  // ✅ Proper null
 
 **Ready for deployment!** 🚀
 
+---
+
+### Fix 4: Delete Redirect & Pagination Upgrade
+
+**Date:** December 11, 2025
+
+**Issues Fixed:**
+
+1.  ❌ "Delete" and "Watched" actions in Library redirected to a "Coming Soon" page.
+2.  ❌ Pagination caused full page reloads, disrupting user experience.
+
+**Root Cause:**
+
+- **Delete Redirect**: The actions used `<form method="POST">` with `_method` overrides (DELETE/PATCH). The Go `http.ServeMux` does not support this pattern natively, causing requests to fall through to the default handler.
+- **Pagination**: Used standard `<a>` links instead of HTMX.
+
+**Changes Made:**
+
+1.  **Library Templates**:
+    - Converted `<form>` actions to `hx-delete` and `hx-patch` buttons.
+    - Added `hx-target="closest .card"` to remove items instantly without refresh.
+2.  **Pagination**:
+    - Converted all pagination links to `hx-get` buttons.
+    - Added `hx-select` to target and swap only the grid content (`#movies-grid` or `#series-grid`).
+    - Added `hx-push-url="true"` to maintain browser history.
+
+**Result:**
+
+- ✅ Delete actions work instantly without redirect.
+- ✅ Pagination is smooth and fast (no full reload).
+- ✅ URL updates correctly during navigation.
