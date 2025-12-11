@@ -180,6 +180,9 @@ func (h *SerieHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return updated serie
+	if input.Watched != nil && *input.Watched {
+		w.Header().Set("HX-Trigger", `{"showMessage":"Series marked as watched"}`)
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(serie)
 }
@@ -214,5 +217,6 @@ func (h *SerieHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return success
+	w.Header().Set("HX-Trigger", `{"showMessage":"Series deleted"}`)
 	w.WriteHeader(http.StatusNoContent)
 }

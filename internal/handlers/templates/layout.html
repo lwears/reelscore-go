@@ -112,16 +112,25 @@
 
         // HTMX event listeners
         document.body.addEventListener('htmx:afterRequest', function(event) {
+            // Handle JSON response messages (legacy)
             if (event.detail.successful) {
                 const xhr = event.detail.xhr;
-                const response = JSON.parse(xhr.responseText || '{}');
-
-                if (response.message) {
-                    showToast(response.message, 'success');
+                try {
+                    const response = JSON.parse(xhr.responseText || '{}');
+                    if (response.message) {
+                        showToast(response.message, 'success');
+                    }
+                } catch (e) {
+                    // Ignore JSON parse errors for non-JSON responses
                 }
             } else {
                 showToast('An error occurred. Please try again.', 'error');
             }
+        });
+
+        // Handle HX-Trigger header events
+        document.body.addEventListener('showMessage', function(evt){
+            showToast(evt.detail.value, 'success');
         });
     </script>
 </body>

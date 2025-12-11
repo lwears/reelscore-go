@@ -46,26 +46,33 @@ func NewAuthHandler(
 	cfg AuthConfig,
 	logger *log.Logger,
 ) *AuthHandler {
+	ghConfig := &oauth2.Config{
+		ClientID:     cfg.GitHubClientID,
+		ClientSecret: cfg.GitHubClientSecret,
+		RedirectURL:  fmt.Sprintf("%s/auth/github/callback", cfg.CallbackHost),
+		Scopes:       []string{"user:email"},
+		Endpoint:     github.Endpoint,
+	}
+
+	googleConfig := &oauth2.Config{
+		ClientID:     cfg.GoogleClientID,
+		ClientSecret: cfg.GoogleClientSecret,
+		RedirectURL:  fmt.Sprintf("%s/auth/google/callback", cfg.CallbackHost),
+		Scopes:       []string{"profile", "email"},
+		Endpoint:     google.Endpoint,
+	}
+
+	// Log the constructed callback URL for debugging
+	logger.Printf("Google OAuth Callback URL: %s", googleConfig.RedirectURL)
+
 	return &AuthHandler{
 		userService:    userService,
 		sessionStore:   sessionStore,
 		authMiddleware: authMiddleware,
 		renderer:       renderer,
 		logger:         logger,
-		googleConfig: &oauth2.Config{
-			ClientID:     cfg.GoogleClientID,
-			ClientSecret: cfg.GoogleClientSecret,
-			RedirectURL:  fmt.Sprintf("%s/auth/google/callback", cfg.CallbackHost),
-			Scopes:       []string{"profile", "email"},
-			Endpoint:     google.Endpoint,
-		},
-		githubConfig: &oauth2.Config{
-			ClientID:     cfg.GitHubClientID,
-			ClientSecret: cfg.GitHubClientSecret,
-			RedirectURL:  fmt.Sprintf("%s/auth/github/callback", cfg.CallbackHost),
-			Scopes:       []string{"user:email"},
-			Endpoint:     github.Endpoint,
-		},
+		googleConfig:   googleConfig,
+		githubConfig:   ghConfig,
 	}
 }
 

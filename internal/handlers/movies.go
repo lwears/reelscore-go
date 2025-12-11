@@ -182,6 +182,9 @@ func (h *MovieHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return updated movie
+	if input.Watched != nil && *input.Watched {
+		w.Header().Set("HX-Trigger", `{"showMessage":"Movie marked as watched"}`)
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(movie)
 }
@@ -216,5 +219,6 @@ func (h *MovieHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return success
+	w.Header().Set("HX-Trigger", `{"showMessage":"Movie deleted"}`)
 	w.WriteHeader(http.StatusNoContent)
 }
